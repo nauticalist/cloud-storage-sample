@@ -91,7 +91,7 @@ class HomeControllerTest {
         this.resultPage = new ResultPage(driver);
         Assert.hasText("Your note were successfully deleted.", resultPage.getSuccessMessage());
         this.resultPage.clickSuccessLink();
-        Assert.doesNotContain("Test Title 2", driver.getPageSource(), "Note does not removed from database. Something went wrong");
+        Assert.doesNotContain("Test Title 2", driver.getPageSource(), "Note were not removed from database. Something went wrong");
     }
 
 
@@ -118,6 +118,79 @@ class HomeControllerTest {
         this.resultPage.clickSuccessLink();
         Assert.hasText("Test Title 3 Edited", homePage.getNoteTitle());
         Assert.hasText("Test Note Description Edited", homePage.getNoteDescription());
+    }
+
+    @Test
+    @Order(4)
+    public void testAddNewCredentialIsSuccessful() {
+        this.createUserAndLogin();
+        driver.get("http://localhost:" + port + "/");
+        this.homePage = new HomePage(driver);
+        homePage.goToCredentialsTab();
+        // add new credential
+        homePage.addCredential("facebook.com", "testuser", "testpassword");
+        // confirm redirection to results page and credential saved successfuly
+        this.resultPage = new ResultPage(driver);
+        Assert.hasText("Your credential were successfully saved.", resultPage.getSuccessMessage());
+        // Return back to the hame page and verify new credential exists
+        resultPage.clickSuccessLink();
+        this.homePage = new HomePage(driver);
+        Assert.hasText("facebook.com", homePage.getCredentialUrl());
+        Assert.hasText("testuser", homePage.getCredentialUsername());
+        Assert.doesNotContain("testpassword", homePage.getCredentialPassword(), "Password is not encrypted");
+    }
+
+    @Test
+    @Order(5)
+    public void testDeleteExistingCredentialIsSuccessful() {
+        this.createUserAndLogin();
+        driver.get("http://localhost:" + port + "/");
+        this.homePage = new HomePage(driver);
+        homePage.goToCredentialsTab();
+        // add new credential
+        homePage.addCredential("twitter.com", "testuser", "testpassword");
+        // confirm redirection to results page and credential saved successfuly
+        this.resultPage = new ResultPage(driver);
+        Assert.hasText("Your credential were successfully saved.", resultPage.getSuccessMessage());
+        // Return back to the hame page and verify new credential exists
+        resultPage.clickSuccessLink();
+        this.homePage = new HomePage(driver);
+        Assert.hasText("twitter.com", homePage.getCredentialUrl());
+        homePage.clickDeleteCredentialButton();
+        this.resultPage = new ResultPage(driver);
+        Assert.hasText("Your credential were successfully deleted.", resultPage.getSuccessMessage());
+        this.resultPage.clickSuccessLink();
+        Assert.doesNotContain("twitter.com", driver.getPageSource(), "Credential were not removed from database. Something went wrong");
+    }
+
+    @Test
+    @Order(6)
+    public void testUpdateExistingCredentialIsSuccessful() {
+        this.createUserAndLogin();
+        driver.get("http://localhost:" + port + "/");
+        this.homePage = new HomePage(driver);
+        homePage.goToCredentialsTab();
+        // add new note
+        homePage.addCredential("linkedin.com", "testuser", "testpassword");
+        // confirm redirection to results page and credential saved successfuly
+        this.resultPage = new ResultPage(driver);
+        Assert.hasText("Your credential were successfully saved.", resultPage.getSuccessMessage());
+        // Return back to the hame page and verify new credential exists
+        resultPage.clickSuccessLink();
+        this.homePage = new HomePage(driver);
+        Assert.hasText("linkedin.com", homePage.getCredentialUrl());
+        homePage.clickEditCredentialButton();
+        Assert.hasText("testpassword", homePage.getCredentialPasswordInputEntry());
+        String oldEncryptedPassword = homePage.getCredentialPassword();
+        homePage.editCredential("reddit.com", "testuser2", "testpassword2");
+        this.resultPage = new ResultPage(driver);
+        Assert.hasText("Your credential were successfully saved.", resultPage.getSuccessMessage());
+        this.resultPage.clickSuccessLink();
+        this.homePage = new HomePage(driver);
+        Assert.hasText("reddit.com", homePage.getCredentialUrl());
+        Assert.hasText("testuser2", homePage.getCredentialUsername());
+        Assert.doesNotContain("testpassword2", homePage.getCredentialPassword(), "Password is not encrypted");
+        assertNotEquals(oldEncryptedPassword, homePage.getCredentialPassword());
     }
 
     private void createUserAndLogin(){
